@@ -24,11 +24,14 @@ class PostFeatureExtractor:
 
         df = df_posts.copy()
 
-        # --------------------------------------------------
-        # Content similarity features (already [0,1])
-        # --------------------------------------------------
-        df["sim_max"] = similarity_matrix.max(axis=1)
-        df["sim_mean"] = similarity_matrix.mean(axis=1)
+        # ---------------------------------------------------------------------------
+        # Content similarity features (already [0,1]) + removing the self-similarity
+        # ---------------------------------------------------------------------------
+        sim = similarity_matrix.copy() 
+        np.fill_diagonal(sim, 0.0)   # or -np.inf for max, but 0 works since similarities are >=0
+
+        df["sim_max"] = sim.max(axis=1)
+        df["sim_mean"] = sim.mean(axis=1)
 
         # --------------------------------------------------
         # Cluster features

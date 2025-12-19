@@ -33,6 +33,7 @@ def detect_duplicates(df):
     duplicate_post_ids = set()
     for i in range(len(similarity_matrix)):
         for j in range(i + 1, len(similarity_matrix)):
+            
             if similarity_matrix[i][j] >= threshold:
                 duplicate_post_ids.add(df.iloc[i]["post_id"])
                 duplicate_post_ids.add(df.iloc[j]["post_id"])

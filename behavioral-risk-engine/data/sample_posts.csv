@@ -1,1 +1,20 @@
-post_id,text,timestamp,account_id
+post_id,text,timestamp,account_id,account_age_days
+1,"Spent the afternoon fixing a bug in my code","2025-01-01 09:05:00",user_001,540
+2,"Coffee tastes better after a long debugging session","2025-01-01 09:22:00",user_002,430
+3,"Finally finished reading that book I started last month","2025-01-01 09:47:00",user_003,390
+4,"Weather is surprisingly warm today","2025-01-01 10:15:00",user_004,610
+
+5,"Bitcoin has been moving sideways lately","2025-01-01 11:00:00",user_010,300
+6,"Not sure if BTC will break resistance this week","2025-01-01 12:10:00",user_011,280
+7,"Crypto markets feel uncertain right now","2025-01-01 13:45:00",user_012,260
+8,"ETH gas fees are still annoying","2025-01-01 15:20:00",user_013,240
+
+9,"DOGE looks like it could pop soon","2025-01-01 18:01:00",user_020,18
+10,"Seeing strong momentum on Dogecoin today","2025-01-01 18:02:00",user_021,14
+11,"Dogecoin might be the next big move","2025-01-01 18:03:00",user_022,9
+12,"Charts suggest DOGE could rally","2025-01-01 18:04:00",user_023,7
+13,"A lot of buzz forming around Dogecoin","2025-01-01 18:05:00",user_024,5
+
+14,"Working on my personal website redesign","2025-01-01 20:10:00",user_030,420
+15,"Tweaking the CSS on my website again","2025-01-01 21:30:00",user_030,420
+16,"Pushed another update to my site","2025-01-01 22:45:00",user_030,420

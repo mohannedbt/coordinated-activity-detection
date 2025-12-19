@@ -8,7 +8,7 @@ from engine.utils.preprocessing import preprocess
 from engine.utils.preprocessing import assign_narrative
 from engine.features.post_features import PostFeatureExtractor
 from engine.models.behavior_clustering import BehaviorClusterer
-
+from engine.explain.explainer import RiskExplainer
 
 
 class RiskPipeline:
@@ -29,6 +29,15 @@ class RiskPipeline:
         self.clusterer = BehaviorClusterer(
             min_cluster_size=self.config.get("min_cluster_size", 5)
         )
+        self.weights = {
+            "sim_max": 0.30,
+            "sim_mean": 0.10,
+            "cluster_size_norm": 0.20,
+            "coordination_score": 0.30,
+            "account_age_norm": 0.10,
+        }
+
+        self.explainer = RiskExplainer(self.weights)
 
     # --------------------------------------------------
     # Stage 1: Preprocessing
@@ -113,27 +122,23 @@ class RiskPipeline:
     # --------------------------------------------------
     # Stage 4: Risk Fusion (heuristic placeholder)
     # --------------------------------------------------
-    def fuse_risk(
-        self,
-        df: pd.DataFrame,
-        feature_cols: list[str],
-    ) -> pd.DataFrame:
+    def fuse_risk(self, df: pd.DataFrame, feature_cols: list[str]) -> pd.DataFrame:
+        df = df.copy()
 
-        weights = {
-            "sim_max": 0.30,
-            "sim_mean": 0.10,
-            "cluster_size_norm": 0.25,
-            "coordination_score": 0.25,
-            "account_age_norm": 0.10,
-        }
+        # Ensure we only use features that exist
+        used = [f for f in self.weights.keys() if f in df.columns]
 
-        df["risk_score"] = 0.0
+        # Risk in [0, 1] (roughly), then scale to [0,100]
+        df["risk_raw"] = 0.0
+        for f in used:
+            df["risk_raw"] += df[f] * self.weights[f]
 
-        for feature, weight in weights.items():
-            df["risk_score"] += df[feature] * weight
+        # Safety clamp then convert to percent
+        df["risk_score"] = (df["risk_raw"].clip(0.0, 1.0) * 100.0).round(2)
 
-        # Convert to percentage
-        df["risk_score"] = (df["risk_score"] * 100).clip(0, 100)
+        # (Optional but super useful for debugging/explaining)
+        for f in used:
+            df[f"contrib_{f}"] = (df[f] * self.weights[f] * 100.0).round(2)
 
         return df
 
@@ -189,6 +194,8 @@ class RiskPipeline:
 
         # Stage 4: risk fusion (still heuristic)
         df = self.fuse_risk(df, feature_cols)
+        # 🔥 NEW: Step 4 — Explanation
+        df = self.explainer.explain_posts(df, top_k=self.config.get("top_k_explanations", 4))
 
         # Stage 5: aggregation
         return {
