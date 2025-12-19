@@ -1,11 +1,20 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
 from datetime import datetime, timedelta
 
 from engine.pipeline.risk_pipeline import RiskPipeline
-
-
+from engine.visualization.functions import (
+    plot_similarity_vs_coordination,
+    plot_cluster_size_vs_account_age,
+    plot_similarity_vs_cluster_size,
+)
+from engine.analysis.functions import (
+    print_risk_summary,
+    risk_conf_matrix,
+)   
+from engine.utils.functions import compute_account_ewma
 # --------------------------------------------------
 # Interpretation helpers (UI logic only)
 # --------------------------------------------------
@@ -20,70 +29,7 @@ def risk_label(risk, conf):
     return "ℹ️ Likely benign"
 
 
-# --------------------------------------------------
-# Visualization helpers (ANALYST UI)
-# --------------------------------------------------
 
-def plot_similarity_vs_coordination(df, path):
-    plt.figure(figsize=(8, 6))
-    sc = plt.scatter(
-        df["sim_mean"],
-        df["coordination_score"],
-        c=df["behavior_cluster"],
-        cmap="tab10",
-        alpha=0.8,
-        edgecolors="k"
-    )
-    plt.axhline(0.5, linestyle="--", alpha=0.4)
-    plt.axvline(0.5, linestyle="--", alpha=0.4)
-    plt.xlabel("Mean content similarity")
-    plt.ylabel("Coordination score")
-    plt.title("Behavior map: Similarity vs Coordination")
-    plt.colorbar(sc, label="Behavior cluster")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(path, dpi=200)
-    plt.close()
-
-
-def plot_cluster_size_vs_account_age(df, path):
-    plt.figure(figsize=(8, 6))
-    sc = plt.scatter(
-        df["cluster_size"],
-        df["account_age_days"],
-        c=df["behavior_cluster"],
-        cmap="tab10",
-        alpha=0.8,
-        edgecolors="k"
-    )
-    plt.xlabel("Copy-paste cluster size")
-    plt.ylabel("Account age (days)")
-    plt.title("Behavior map: Repetition vs Account Age")
-    plt.colorbar(sc, label="Behavior cluster")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(path, dpi=200)
-    plt.close()
-
-
-def plot_similarity_vs_cluster_size(df, path):
-    plt.figure(figsize=(8, 6))
-    sc = plt.scatter(
-        df["sim_mean"],
-        df["cluster_size"],
-        c=df["behavior_cluster"],
-        cmap="tab10",
-        alpha=0.8,
-        edgecolors="k"
-    )
-    plt.xlabel("Mean content similarity")
-    plt.ylabel("Cluster size")
-    plt.title("Behavior map: Similarity vs Repetition")
-    plt.colorbar(sc, label="Behavior cluster")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(path, dpi=200)
-    plt.close()
 
 
 # --------------------------------------------------
@@ -141,91 +87,194 @@ def generate_demo_posts():
 
     return pd.DataFrame(posts)
 
+# --------------------------------------------------
+# Configuration (easy to move to env / config file)
+# --------------------------------------------------
+
+RISK_AUTO = 75
+CONF_AUTO = 0.8
+
+RISK_REVIEW = 50
+CONF_REVIEW = 0.5
+
+OUTPUT_DIR = "outputs"
+
 
 # --------------------------------------------------
-# MAIN DEMO (Analyst Console UI)
+# Decision policy (WEB-READY)
+# --------------------------------------------------
+
+def decision_policy(risk: float, confidence: float) -> str:
+    if risk >= RISK_AUTO and confidence >= CONF_AUTO:
+        return "AUTO_ACTION"
+    if risk >= RISK_REVIEW and confidence >= CONF_REVIEW:
+        return "QUEUE_REVIEW"
+    return "NO_ACTION"
+
+
+# --------------------------------------------------
+# Serialization helpers (WEB)
+# --------------------------------------------------
+
+def serialize_posts(df: pd.DataFrame) -> list[dict]:
+    """Convert posts dataframe into JSON-safe records."""
+    cols = [
+        "post_id",
+        "text",
+        "account_id",
+        "risk_score",
+        "confidence",
+        "decision",
+        "reason_category",
+        "top_drivers",
+        "explanations",
+    ]
+    return df[cols].to_dict(orient="records")
+
+
+def serialize_accounts(df: pd.DataFrame) -> list[dict]:
+    return df.to_dict(orient="records")
+
+
+# --------------------------------------------------
+# MAIN (CLI + WEB-READY)
 # --------------------------------------------------
 
 def main():
-    os.makedirs("outputs", exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    print("\nGenerating demo data...")
-    # df_posts = generate_demo_posts() # Use this to generate semi-realistic demo data
-    df_posts = pd.read_csv("data/sample_posts.csv") # Or load from CSV
+    print("\nRunning behavioral risk MVP...\n")
 
+    # --------------------------------------------------
+    # Load data (CSV today, API tomorrow)
+    # --------------------------------------------------
+    df_posts = pd.read_csv("data/sample_posts.csv")
+
+    # --------------------------------------------------
+    # Run pipeline
+    # --------------------------------------------------
     pipeline = RiskPipeline()
-
-    print("Running risk pipeline...")
     results = pipeline.run(df_posts)
-    posts = results["posts"]
+
+    posts = results["posts"].copy()
 
     # --------------------------------------------------
-    # TOP POSTS
+    # Semantics (explicit)
     # --------------------------------------------------
-
-    print("\n=== TOP RISKY POSTS ===")
-    top = posts.sort_values("risk_score", ascending=False).head(10)
-    print(top[[
-        "post_id",
-        "text",
-        "risk_score",
-        "confidence",
-        "behavior_cluster"
-    ]])
+    print("=== SEMANTICS ===")
+    print("Risk       → severity of behavior")
+    print("Confidence → certainty pattern is real\n")
 
     # --------------------------------------------------
-    # CLUSTER SUMMARY
+    # Decisions
     # --------------------------------------------------
+    posts["decision"] = posts.apply(
+        lambda r: decision_policy(r["risk_score"], r["confidence"]),
+        axis=1
+    )
 
-    print("\n=== BEHAVIORAL CLUSTERS ===")
-    clusters = (
+    print("=== DECISION POLICY ===")
+    print("AUTO_ACTION  → risk ≥ 75 AND confidence ≥ 0.8")
+    print("QUEUE_REVIEW → risk ≥ 50 AND confidence ≥ 0.5")
+    print("NO_ACTION    → otherwise\n")
+
+    print("=== DECISION SUMMARY ===")
+    print(posts["decision"].value_counts(), "\n")
+
+    # --------------------------------------------------
+    # Actionable posts (NO top-k bias)
+    # --------------------------------------------------
+    actionable = posts[posts["decision"] != "NO_ACTION"] \
+        .sort_values("risk_score", ascending=False)
+
+    print("=== ACTIONABLE POSTS ===")
+    for _, r in actionable.iterrows():
+        print(
+            f"\nPost {int(r.post_id)}"
+            f" | risk={r.risk_score:.2f}"
+            f" | conf={r.confidence:.2f}"
+            f" | decision={r.decision}"
+        )
+        print("Interpretation:", risk_label(r.risk_score, r.confidence))
+        print("Text:", r.text)
+        for line in r.explanations:
+            print(" -", line)
+
+    # --------------------------------------------------
+    # Temporal smoothing (EWMA)
+    # --------------------------------------------------
+    posts = compute_account_ewma(posts, alpha=0.3)
+
+    # --------------------------------------------------
+    # Aggregations (WEB-READY)
+    # --------------------------------------------------
+    account_view = (
+        posts.groupby("account_id")
+        .agg(
+            avg_risk=("risk_score", "mean"),
+            max_risk=("risk_score", "max"),
+            avg_confidence=("confidence", "mean"),
+            risk_trend=("risk_ewma", "last"),
+            total_posts=("post_id", "count"),
+        )
+        .reset_index()
+        .sort_values("max_risk", ascending=False)
+    )
+
+    cluster_view = (
         posts.groupby("behavior_cluster")
         .agg(
             posts=("post_id", "count"),
             avg_risk=("risk_score", "mean"),
-            avg_sim=("sim_mean", "mean"),
-            avg_coord=("coordination_score", "mean"),
-            avg_account_age=("account_age_days", "mean"),
+            avg_confidence=("confidence", "mean"),
+            auto_actions=("decision", lambda x: (x == "AUTO_ACTION").sum()),
         )
+        .reset_index()
     )
-    print(clusters)
-
-    print("\n=== CLUSTER INTERPRETATION ===")
-    for cid, grp in posts.groupby("behavior_cluster"):
-        if cid == -1:
-            print(f"Cluster -1: Outliers / rare behavior ({len(grp)} posts)")
-        else:
-            print(
-                f"Cluster {cid}: {len(grp)} posts | "
-                f"avg_sim={grp['sim_mean'].mean():.2f} | "
-                f"avg_coord={grp['coordination_score'].mean():.2f}"
-            )
 
     # --------------------------------------------------
-    # VISUAL MAPS (Step 3 intuition)
+    # Analysis (debug / analyst)
     # --------------------------------------------------
+    print_risk_summary(posts)
+    risk_conf_matrix(posts)
 
-    plot_similarity_vs_coordination(posts, "outputs/01_similarity_vs_coordination.png")
-    plot_cluster_size_vs_account_age(posts, "outputs/02_cluster_size_vs_account_age.png")
-    plot_similarity_vs_cluster_size(posts, "outputs/03_similarity_vs_cluster_size.png")
+    # --------------------------------------------------
+    # Visualizations (saved for web)
+    # --------------------------------------------------
+    plot_similarity_vs_coordination(
+        posts, f"{OUTPUT_DIR}/01_similarity_vs_coordination.png"
+    )
+    plot_cluster_size_vs_account_age(
+        posts, f"{OUTPUT_DIR}/02_cluster_size_vs_account_age.png"
+    )
+    plot_similarity_vs_cluster_size(
+        posts, f"{OUTPUT_DIR}/03_similarity_vs_cluster_size.png"
+    )
 
     print("\nBehavior maps saved to ./outputs/")
 
     # --------------------------------------------------
-    # EXPLANATIONS (Step 4)
+    # FINAL WEB PAYLOAD (MVP)
     # --------------------------------------------------
+    web_payload = {
+        "summary": {
+            "total_posts": len(posts),
+            "auto_actions": int((posts.decision == "AUTO_ACTION").sum()),
+            "queue_review": int((posts.decision == "QUEUE_REVIEW").sum()),
+        },
+        "posts": serialize_posts(posts),
+        "accounts": serialize_accounts(account_view),
+        "clusters": serialize_accounts(cluster_view),
+    }
 
-    print("\n=== TOP 5 POSTS WITH EXPLANATIONS ===")
-    for _, r in top.head(5).iterrows():
-        label = risk_label(r["risk_score"], r["confidence"])
-        print(f"\nPost {int(r['post_id'])} | risk={r['risk_score']:.2f} | conf={r['confidence']:.2f}")
-        print("Interpretation:", label)
-        print("Text:", r["text"])
-        print("Top drivers:", r["top_drivers"])
-        print("Why flagged:")
-        print("This post matches a behavioral pattern involving repetition and/or coordination.")
-        for line in r["explanations"]:
-            print(" -", line)
+    with open(f"{OUTPUT_DIR}/mvp_payload.json", "w", encoding="utf-8") as f:
+        json.dump(web_payload, f, indent=2, ensure_ascii=False)
+
+    print("\n✅ MVP payload exported to outputs/mvp_payload.json")
+    print("\n=== NEXT STEPS ===")
+    print("• Plug this payload into a web UI")
+    print("• Wrap main() in FastAPI endpoint")
+    print("• Add rolling alerts / thresholds")
 
 
 # --------------------------------------------------

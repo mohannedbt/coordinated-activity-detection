@@ -4,8 +4,8 @@ from typing import Dict, Any
 from engine.detectors.copy_paste import detect_duplicates
 from engine.detectors.frequent_posting import detect_coordinated_posts
 from engine.detectors.bot_rating import score_accounts
-from engine.utils.preprocessing import preprocess
-from engine.utils.preprocessing import assign_narrative
+from engine.utils.functions import preprocess
+from engine.utils.functions import assign_narrative
 from engine.features.post_features import PostFeatureExtractor
 from engine.models.behavior_clustering import BehaviorClusterer
 from engine.explain.explainer import RiskExplainer

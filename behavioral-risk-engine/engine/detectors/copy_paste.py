@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.cluster import AgglomerativeClustering
-from engine.utils.preprocessing import preprocess
+from engine.utils.functions import preprocess
 import pandas as pd
 import torch
 

@@ -9,7 +9,7 @@ class BehaviorClusterer:
     Step 2: Unsupervised behavioral pattern discovery
     """
 
-    def __init__(self, min_cluster_size: int = 5):
+    def __init__(self, min_cluster_size: int = 2): # Adjusted default for testing (Real default 5)
         self.scaler = StandardScaler()
         self.clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,

@@ -31,3 +31,11 @@ def assign_narrative(text: str) -> str:
         return "DOGE"
 
     return "OTHER"
+def compute_account_ewma(df, alpha=0.3):
+    df = df.sort_values("timestamp")
+    df["risk_ewma"] = (
+        df.groupby("account_id")["risk_score"]
+          .apply(lambda x: x.ewm(alpha=alpha, adjust=False).mean())
+          .reset_index(level=0, drop=True)
+    )
+    return df
