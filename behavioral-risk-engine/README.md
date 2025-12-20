@@ -1,161 +1,84 @@
 # 🛡️ BehaviorGuard — Behavioral Risk Intelligence Platform
 
-BehaviorGuard is an end-to-end **behavioral risk detection and moderation intelligence platform** designed to identify spam, coordinated campaigns, and abnormal user behavior using **explainable risk scoring**.
-
-The system combines a **Python ML backend (FastAPI)** with a **.NET 8 MVC dashboard** to provide moderators with transparent, actionable insights rather than black-box flags.
-
----
-
-## 🚀 Features
-
-### 🔍 Behavioral Risk Detection
-- Post-level and account-level risk scoring
-- Detection of:
-  - Coordinated posting behavior
-  - Copy-paste / near-duplicate content
-  - Burst activity patterns
-  - New account anomalies
-
-### 🧠 Unsupervised Pattern Discovery
-- Behavioral clustering using **HDBSCAN**
-- Automatic grouping of similar posting behaviors
-- Cluster confidence estimation
-
-### 🧾 Explainable AI (XAI)
-- Each flagged item includes:
-  - Top contributing signals
-  - Human-readable explanations
-  - Confidence score
-  - Risk interpretation label (e.g. *Coordinated Campaign*, *Copy-Paste Repetition*)
-
-### 📊 Moderation Dashboard (ASP.NET Core)
-- KPI overview (total posts, auto-actions, queued reviews)
-- Account-level risk aggregation
-- Cluster-level analytics
-- Secure authentication with role-based access
+BehaviorGuard is an end-to-end **behavioral risk detection and moderation intelligence platform** designed to identify spam, coordinated campaigns, and abnormal user behavior using **explainable risk scoring**. The system bridges the gap between raw data and human decision-making by combining a **Python ML backend (FastAPI)** with a polished **ASP.NET Core 8 MVC dashboard**.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-Browser
-│
-▼
-ASP.NET Core MVC Dashboard (.NET 8)
-│
-▼
-FastAPI Backend (Python)
-│
-▼
-Behavioral Risk Engine
-├── Feature Extraction
-├── Similarity & Coordination Analysis
-├── Behavioral Clustering
-├── Risk Scoring
-└── Explainability Layer
+The platform is split into two independent services that communicate via a RESTful API:
 
-yaml
-Copier le code
+1.  **FastAPI Backend (Python)**: The analytical "brain" that executes the ML pipeline, calculates risk scores, and performs behavioral clustering.
+2.  **ASP.NET Core MVC Dashboard (.NET 8)**: The "face" of the platform, providing moderators with interactive visualizations, ranked tables, and session management.
+
+
 
 ---
 
-## 🧩 Backend Stack (Python)
+## ⚙️ The MVP Pipeline (Python Logic)
 
-- **FastAPI** — REST API
-- **Pandas / NumPy** — data processing
-- **scikit-learn** — clustering & similarity
-- **Sentence Embeddings** — semantic similarity
-- **HDBSCAN** — unsupervised behavior discovery
+The core logic resides in the `run_mvp_pipeline` function. It transforms raw CSV data into actionable intelligence through a structured flow:
 
-### Key API Endpoints
-
-| Endpoint | Method | Description |
-|-------|------|------------|
-| `/api/health` | GET | Health check |
-| `/api/dashboard` | GET | Current moderation snapshot |
-| `/api/upload-cv` | POST | Upload dataset & recompute risks |
+* **Data Ingestion**: Reads a CSV containing `post_id`, `text`, `timestamp`, `account_id`, and `account_age_days`.
+* **Risk Engine Execution**: Uses the `RiskPipeline` to generate base `risk_score` and `confidence` metrics for every post.
+* **Policy Enforcement**: Applies a `decision_policy` that automatically classifies posts into `AUTO_ACTION`, `QUEUE_REVIEW`, or `NO_ACTION` based on risk thresholds.
+* **Trend Tracking (EWMA)**: Computes an **Exponentially Weighted Moving Average (EWMA)** for account risk. This identifies if a user's behavior is escalating over time rather than judging them on a single isolated post.
+* **Multi-Dimensional Aggregation**: 
+    * **Account View**: Aggregates total posts, average risk, and risk trends for every user.
+    * **Cluster View**: Groups posts by `behavior_cluster` (derived via HDBSCAN) to detect coordinated bot-net activity.
+* **Serialization**: Packages the data into a JSON-ready format for the .NET UI.
 
 ---
 
-## 🖥️ Frontend Stack (.NET)
+## 🖥️ The .NET 8 Dashboard (UI/UX)
 
-- **ASP.NET Core MVC (.NET 8)**
-- **Bootstrap 5 + Bootstrap Icons**
-- **Chart.js** for visual analytics
-- Cookie-based authentication
-- Custom authorization flow with access-denied handling
+The frontend is designed for **Explainable AI (XAI)**, ensuring moderators understand *why* a decision was made rather than just seeing a flag.
 
----
+### 1. Analytics Dashboard (`Index.cshtml`)
+* **KPI Cards**: High-level counters for **Total Posts**, **Auto Actions**, and **Average Risk Score**.
+* **Interactive Charts (Chart.js)**: 
+    * **Decision Breakdown**: A doughnut chart displaying the ratio of moderation actions.
+    * **Risk Distribution**: A bar chart segmenting posts into High, Med, and Low risk buckets.
+* **Ranked Post Analysis**: A table that automatically ranks posts by the highest risk score. It features **AJAX-driven pagination** to handle large datasets smoothly without page refreshes.
 
-## 🔐 Authentication & Access Control
 
-- Users must be authenticated to access the dashboard
-- Unauthorized access redirects to a dedicated **Access Restricted** page
-- Role support (Admin / Moderator) for future extensions
 
----
-
-## 📁 Project Structure (Simplified)
-
-api/
-├── main.py
-├── requirements.txt
-└── runtime.txt
-
-engine/
-├── pipeline/
-├── models/
-├── detectors/
-├── explain/
-└── utils/
-
-UI/
-└── Behavior-risk-UI/
-├── Controllers/
-├── Views/
-├── Services/
-└── wwwroot/
-
-yaml
-Copier le code
+### 2. Account Risk Profiles
+* **Risk Profiles**: Lists accounts by their aggregate threat level.
+* **Trend Visualization**: Displays the EWMA trend to show if an account is becoming more dangerous.
+* **Direct Intervention**: Integrated buttons allow moderators to "Restrict" accounts immediately based on the pipeline's max_risk score.
 
 ---
 
-## ⚙️ Deployment Notes
+## 🛠️ Setup and Installation
 
-- Designed for **CPU-only environments**
-- Handles large ML dependencies
-- Supports experimental Python 3.13 setups
-- Can be deployed as two independent services:
-  - FastAPI backend
-  - ASP.NET MVC frontend
+### 1. Backend Setup (FastAPI)
+```bash
+# Navigate to the api directory
+cd api
+pip install -r requirements.txt
+```
+```bash
+# Start the FastAPI server
 
----
+uvicorn main:app --reload --port 8000
+```
+### 2. Frontend Setup (ASP.NET Core)
+**Open the Project**: Open the solution in your preferred editor (e.g., Visual Studio 2022 or VS Code).
 
-## 🧠 Design Philosophy
+**Configure API Endpoint:** Ensure the DashboardController or the frontend fetch logic is configured to communicate with the FastAPI backend at http://localhost:8000.
 
-> Moderation systems should **explain** before they **enforce**.
+**Run the Project:** Launch the application (press F5 or use dotnet run).
 
-BehaviorGuard prioritizes:
-- Transparency over black-box decisions
-- Human-in-the-loop moderation
-- Scalable, modular architecture
-- Real-world deployment constraints
+**📁 Project Structure**
 
----
+```
+api/               # FastAPI endpoints and session handling
+engine/            # The ML Engine (Pipeline, Detectors, XAI)
+UI/                # ASP.NET Core MVC (Controllers, Views, wwwroot)
+data/              # Data storage and temporary session uploads
+```
+**🧠 Design Philosophy**
+***"Moderation systems should explain before they enforce."***
 
-## 📌 Current Status
-
-**Version:** 2.0 (MVP+)  
-- Risk weights are currently static  
-- Behavioral clustering is active  
-- Designed to evolve toward adaptive / learned weighting
-
----
-
-## 📬 Author
-
-Developed by **Mohanned**  
-Software Engineering • AI • Systems Design
-
-Feel free to reach out for collaboration, feedback, or deployment discussions.
+BehaviorGuard prioritizes Human-in-the-loop moderation. By providing transparency through confidence scores and categorical risk drivers, the platform empowers moderators to act with precision and speed.
