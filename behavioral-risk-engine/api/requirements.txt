@@ -4,3 +4,9 @@ pandas
 numpy
 scikit-learn
 hdbscan
+matplotlib
+seaborn
+scikit-learn
+requests
+torch==2.2.2
+sentence-transformers==2.7.0
