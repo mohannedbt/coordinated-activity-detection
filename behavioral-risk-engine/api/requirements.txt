@@ -11,4 +11,5 @@ requests
 
 sentence-transformers==2.7.0
 
-torch
+--extra-index-url https://download.pytorch.org/whl/nightly/cpu
+torch --index-url https://download.pytorch.org/whl/nightly/cpu
