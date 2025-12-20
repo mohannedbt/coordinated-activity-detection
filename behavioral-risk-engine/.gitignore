@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Data
+data/uploads/
+engine/outputs/
+
+# .NET
+bin/
+obj/
+.vs/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

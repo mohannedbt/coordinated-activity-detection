@@ -1,4 +1,5 @@
 import re
+import pandas as pd
 # Text Preprocessing
 def preprocess(text):
     text = text.lower()
@@ -13,7 +14,24 @@ def preprocess(text: str) -> str:
     text = re.sub(r"[^a-z0-9\s#\$]", "", text)
     return text.strip()
 
+def serialize_posts(df: pd.DataFrame) -> list[dict]:
+    """Convert posts dataframe into JSON-safe records."""
+    cols = [
+        "post_id",
+        "text",
+        "account_id",
+        "risk_score",
+        "confidence",
+        "decision",
+        "reason_category",
+        "top_drivers",
+        "explanations",
+    ]
+    return df[cols].to_dict(orient="records")
 
+
+def serialize_accounts(df: pd.DataFrame) -> list[dict]:
+    return df.to_dict(orient="records")
 def assign_narrative(text: str) -> str:
     """
     Assigns a narrative label to a post based on keyword heuristics.
@@ -39,3 +57,14 @@ def compute_account_ewma(df, alpha=0.3):
           .reset_index(level=0, drop=True)
     )
     return df
+RISK_AUTO = 75
+CONF_AUTO = 0.8
+
+RISK_REVIEW = 50
+CONF_REVIEW = 0.5
+def decision_policy(risk: float, confidence: float) -> str:
+    if risk >= RISK_AUTO and confidence >= CONF_AUTO:
+        return "AUTO_ACTION"
+    if risk >= RISK_REVIEW and confidence >= CONF_REVIEW:
+        return "QUEUE_REVIEW"
+    return "NO_ACTION"

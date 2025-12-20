@@ -1,0 +1,368 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Moderation Dashboard";
+}
+
+<style>
+    /* SIDEBAR STYLING */
+    #wrapper {
+        display: flex;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    #sidebar-wrapper {
+        min-width: 280px;
+        max-width: 280px;
+        background: #ffffff;
+        transition: all 0.3s;
+    }
+
+    .sidebar-heading {
+        padding: 1.5rem 1.25rem;
+        font-size: 1.2rem;
+    }
+
+    .list-group-item {
+        border: none;
+        padding: 1rem 1.5rem;
+        margin: 0.2rem 0;
+        border-radius: 10px !important;
+        transition: all 0.2s;
+        color: #555;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+        transform: translateX(5px);
+    }
+
+    .list-group-item.active {
+        background-color: #e7f1ff !important;
+        color: #0d6efd !important;
+        font-weight: 600;
+    }
+
+    .border-dashed {
+        border: 2px dashed #dee2e6 !important;
+        transition: border-color 0.3s;
+    }
+
+    .border-dashed:hover {
+        border-color: #0d6efd !important;
+    }
+
+    #page-content-wrapper {
+        width: 100%;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<div id="wrapper">
+    <div class="border-end shadow-sm" id="sidebar-wrapper">
+        <div class="sidebar-heading border-bottom d-flex align-items-center">
+            <i class="bi bi-shield-lock-fill text-primary fs-3 me-2"></i>
+            <span class="fw-bold text-dark">Risk Guard AI</span>
+        </div>
+        
+        <div class="list-group list-group-flush mt-3">
+            <a asp-controller="Dashboard" asp-action="Index" class="list-group-item list-group-item-action active">
+                <i class="bi bi-grid-1x2-fill me-3"></i>Analytics Dashboard
+            </a>
+            <a asp-controller="Dashboard" asp-action="Logs" class="list-group-item list-group-item-action">
+                <i class="bi bi-shield-shaded me-3"></i>Action Logs
+            </a>
+            <a asp-controller="Dashboard" asp-action="Accounts" class="list-group-item list-group-item-action">
+                <i class="bi bi-person-badge me-3"></i>Account Risks
+            </a>
+            <a asp-controller="Dashboard" asp-action="Settings" class="list-group-item list-group-item-action">
+                <i class="bi bi-gear me-3"></i>System Settings
+            </a>
+
+            <div class="mt-5 px-3">
+                <button type="button" class="btn btn-primary w-100 py-3 rounded-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="bi bi-file-earmark-arrow-up-fill me-2"></i>
+                    Upload My CV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-expand navbar-light bg-white border-bottom px-4 py-3 shadow-sm">
+            <div class="container-fluid">
+                <h5 class="mb-0 fw-bold">Moderator Panel</h5>
+                <div class="ms-auto text-muted small">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+                       <i class="bi bi-circle-fill me-2" style="font-size: 8px;"></i> System Live
+                    </span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid py-4 px-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-0 text-dark">Behavioral Risk Dashboard</h2>
+                    <p class="text-muted mb-0">Coordinated behavior and spam signal analysis</p>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small">Refreshed at: @DateTime.Now.ToString("HH:mm:ss")</div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Total Posts</h6>
+                        <h2 class="fw-bold mb-0">@Model.TotalPosts</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-danger border-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Auto Actions</h6>
+                        <h2 class="fw-bold text-danger mb-0">@Model.AutoActions</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-warning border-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">Avg Risk Score</h6>
+                        <h2 class="fw-bold text-warning mb-0">@Model.AvgRisk</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 border-start border-success border-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-1">System Status</h6>
+                        <h5 class="fw-bold text-success mb-0">Operational</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <h6 class="fw-bold mb-4 text-muted small">DECISION BREAKDOWN</h6>
+                        <div style="position: relative; height:220px;"><canvas id="decisionChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <h6 class="fw-bold mb-4 text-muted small">RISK DISTRIBUTION</h6>
+                        <div style="position: relative; height:220px;"><canvas id="riskChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <h6 class="fw-bold mb-4 text-muted small">RISK DRIVERS</h6>
+                        <div style="position: relative; height:220px;"><canvas id="reasonChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Detailed Post Analysis</h5>
+                    <div class="btn-group">
+                        <button id="btnPrev" class="btn btn-sm btn-outline-primary px-3" onclick="changePostPage(-1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <span id="postPageIndicator" class="btn btn-sm btn-light disabled fw-bold" style="min-width: 100px;">Page 1</span>
+                        <button id="btnNext" class="btn btn-sm btn-outline-primary px-3" onclick="changePostPage(1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Post Content</th>
+                            <th>Risk Score</th>
+                            <th>Confidence</th>
+                            <th>Category</th>
+                            <th class="pe-4">Decision</th>
+                        </tr>
+                        </thead>
+                        <tbody id="postsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="uploadModalLabel">Upload Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Analyze your CV for potential AI detection or risk classification.</p>
+                <form id="cvUploadForm">
+                    <div class="border-dashed rounded-4 p-5 text-center bg-light mb-3">
+                        <i class="bi bi-file-earmark-pdf fs-1 text-primary mb-2"></i>
+                        <h6 class="fw-bold">Choose your CV</h6>
+                        <p class="text-muted small">PDF, DOCX accepted</p>
+                        <input type="file" class="form-control mt-3" id="cvFile" accept=".pdf,.docx">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold">Scan Document</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // 1. GLOBAL STATE
+    let allPosts = @Html.Raw(Model.PostsJson ?? "[]");
+    let charts = {}; 
+    let postCurrentPage = 1;
+    const postPageSize = 10;
+
+    // 2. RENDER POSTS TABLE (RANKED & PAGINATED)
+    function renderPostsTable() {
+        const tbody = document.getElementById("postsTable");
+        const pageIndicator = document.getElementById("postPageIndicator");
+
+        // RANKING: Sort by Risk Score (Highest to Lowest)
+        const rankedPosts = [...allPosts].sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0));
+
+        // PAGINATION: Slice the ranked array
+        const totalPages = Math.ceil(rankedPosts.length / postPageSize);
+        const start = (postCurrentPage - 1) * postPageSize;
+        const end = start + postPageSize;
+        const pageItems = rankedPosts.slice(start, end);
+
+        // UI UPDATES
+        pageIndicator.innerText = `Page ${postCurrentPage} of ${totalPages || 1}`;
+        document.getElementById("btnPrev").disabled = postCurrentPage === 1;
+        document.getElementById("btnNext").disabled = (postCurrentPage === totalPages || totalPages === 0);
+
+        // RENDER ROWS
+        tbody.innerHTML = "";
+        pageItems.forEach(p => {
+            const riskScore = p.risk_score ?? 0;
+            const confidence = p.confidence ?? 0;
+            const decision = p.decision ?? "UNKNOWN";
+            const text = p.text ?? '<em>No content</em>';
+            const category = p.reason_category ?? 'N/A';
+
+            const riskColor = riskScore >= 75 ? 'text-danger' : (riskScore >= 40 ? 'text-warning' : 'text-success');
+            const badgeClass = decision === "AUTO_ACTION" ? "bg-danger" :
+                (decision === "QUEUE_REVIEW" ? "bg-warning text-dark" : "bg-secondary");
+
+            tbody.innerHTML += `
+            <tr>
+                <td class="ps-4">
+                    <div class="text-truncate" style="max-width: 450px;" title="${text.replace(/"/g, '&quot;')}">
+                        ${text}
+                    </div>
+                </td>
+                <td><strong class="${riskColor}">${riskScore.toFixed(1)}</strong></td>
+                <td>${(confidence * 100).toFixed(0)}%</td>
+                <td><span class="badge bg-light text-dark border px-2">${category}</span></td>
+                <td class="pe-4"><span class="badge ${badgeClass} rounded-pill">${decision}</span></td>
+            </tr>`;
+        });
+    }
+
+    function changePostPage(direction) {
+        postCurrentPage += direction;
+        renderPostsTable();
+    }
+
+    // 3. CHARTS INITIALIZATION
+    function initCharts(data) {
+        const commonOptions = { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } };
+
+        // Decision Doughnut
+        const dCounts = data.reduce((acc, p) => { acc[p.decision] = (acc[p.decision] || 0) + 1; return acc; }, {});
+        charts.decision = new Chart(document.getElementById('decisionChart'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(dCounts), datasets: [{ data: Object.values(dCounts), backgroundColor: ['#6c757d', '#dc3545', '#ffc107', '#0dcaf0'], borderWidth: 0 }] },
+            options: { ...commonOptions, cutout: '75%' }
+        });
+
+        // Risk Bar
+        const buckets = { 'High (70+)': 0, 'Med (40-70)': 0, 'Low (<40)': 0 };
+        data.forEach(p => { if (p.risk_score >= 70) buckets['High (70+)']++; else if (p.risk_score >= 40) buckets['Med (40-70)']++; else buckets['Low (<40)']++; });
+        charts.risk = new Chart(document.getElementById('riskChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: ['#dc3545', '#ffc107', '#198754'], borderRadius: 6 }] },
+            options: { ...commonOptions, plugins: { legend: { display: false } } }
+        });
+
+        // Drivers Horizontal Bar
+        const driverData = data.reduce((acc, p) => { acc[p.reason_category || 'Other'] = (acc[p.reason_category || 'Other'] || 0) + 1; return acc; }, {});
+        charts.reason = new Chart(document.getElementById('reasonChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(driverData), datasets: [{ data: Object.values(driverData), backgroundColor: '#0d6efd', borderRadius: 4 }] },
+            options: { ...commonOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+    }
+
+    // 4. GLOBAL REFRESH (FOR UPLOADS)
+    function updateDashboardUI(payload) {
+        allPosts = payload.posts || [];
+        postCurrentPage = 1; // Reset to page 1 on new data
+
+        // Update Stats Cards
+        if(payload.summary) {
+            // Adjust selectors based on your specific card order
+            document.querySelectorAll('h2.fw-bold')[0].innerText = payload.posts.length;
+            document.querySelectorAll('h2.fw-bold')[1].innerText = payload.summary.auto_actions || 0;
+            document.querySelectorAll('h2.fw-bold')[2].innerText = (payload.summary.avg_risk || 0).toFixed(1);
+        }
+
+        // Refresh Table
+        renderPostsTable();
+
+        // Refresh Charts
+        const dCounts = allPosts.reduce((acc, p) => { acc[p.decision] = (acc[p.decision] || 0) + 1; return acc; }, {});
+        charts.decision.data.labels = Object.keys(dCounts);
+        charts.decision.data.datasets[0].data = Object.values(dCounts);
+        charts.decision.update();
+
+        const rBuckets = [0, 0, 0]; // High, Med, Low
+        allPosts.forEach(p => { if (p.risk_score >= 70) rBuckets[0]++; else if (p.risk_score >= 40) rBuckets[1]++; else rBuckets[2]++; });
+        charts.risk.data.datasets[0].data = rBuckets;
+        charts.risk.update();
+
+        const driverData = allPosts.reduce((acc, p) => { acc[p.reason_category || 'Other'] = (acc[p.reason_category || 'Other'] || 0) + 1; return acc; }, {});
+        charts.reason.data.labels = Object.keys(driverData);
+        charts.reason.data.datasets[0].data = Object.values(driverData);
+        charts.reason.update();
+    }
+
+    // 5. UPLOAD FORM HANDLING
+    document.getElementById('cvUploadForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('cvFile');
+        if (fileInput.files.length === 0) return alert("Please select a file.");
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        const submitBtn = e.target.querySelector('button');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Analyzing...";
+
+        try {
+            const response = await fetch('http://localhost:8000/api/upload-cv', { method: 'POST', body: formData });
+            if (response.ok) {
+                const results = await response.json();
+                updateDashboardUI(results);
+                bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+            } else { alert("Analysis failed."); }
+        } catch (err) { alert("API Connection Error."); }
+        finally { submitBtn.disabled = false; submitBtn.innerText = "Scan Document"; }
+    };
+
+    // INIT
+    document.addEventListener("DOMContentLoaded", () => {
+        renderPostsTable();
+        initCharts(allPosts);
+    });
+</script>

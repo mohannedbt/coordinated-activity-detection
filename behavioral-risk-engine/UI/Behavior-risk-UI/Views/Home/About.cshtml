@@ -1,0 +1,134 @@
+﻿@{
+    ViewData["Title"] = "About";
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+
+    <!-- HERO -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold display-5">Behavioral Risk Detection</h1>
+        <p class="text-muted fs-5 mt-3">
+            A moderation-focused platform to detect coordinated spam,
+            manipulation, and abnormal user behavior.
+        </p>
+    </div>
+
+    <!-- WHAT IT IS -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <h3 class="fw-bold mb-3">What is this platform?</h3>
+            <p class="text-muted">
+                This system helps moderators and trust & safety teams identify
+                suspicious behavioral patterns across user-generated content.
+            </p>
+            <p class="text-muted">
+                Instead of relying only on content or keywords, it focuses on
+                <strong>how users behave</strong>: repetition, timing, coordination,
+                and account maturity.
+            </p>
+        </div>
+        <div class="col-md-6 text-center">
+            <i class="bi bi-shield-check display-1 text-primary"></i>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="mb-5">
+        <h3 class="fw-bold text-center mb-4">How it works</h3>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <i class="bi bi-chat-dots fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold">Collect signals</h6>
+                        <p class="small text-muted">
+                            Posts, timing, similarity, and account metadata
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <i class="bi bi-diagram-3 fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold">Detect patterns</h6>
+                        <p class="small text-muted">
+                            Copy-paste clusters and coordinated bursts
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <i class="bi bi-bar-chart fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold">Score risk</h6>
+                        <p class="small text-muted">
+                            Severity and certainty are evaluated separately
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-check fs-2 text-primary mb-2"></i>
+                        <h6 class="fw-bold">Human decision</h6>
+                        <p class="small text-muted">
+                            Auto-action, review queue, or no action
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RISK VS CONFIDENCE -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <h4 class="fw-bold">Risk vs Confidence</h4>
+            <p class="text-muted">
+                Risk measures how severe a behavior is.
+                Confidence measures how certain the system is.
+            </p>
+            <p class="text-muted">
+                They are intentionally separated to avoid blind automation
+                and to keep moderators in control.
+            </p>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-group shadow-sm">
+                <li class="list-group-item">
+                    🚨 High risk + high confidence → Automatic action
+                </li>
+                <li class="list-group-item">
+                    ⚠️ High risk + low confidence → Human review
+                </li>
+                <li class="list-group-item">
+                    ℹ️ Low risk → No action
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- WHO IT'S FOR -->
+    <div class="text-center">
+        <h3 class="fw-bold mb-3">Who is this for?</h3>
+        <p class="text-muted mb-4">
+            Teams responsible for moderation, safety, and platform integrity.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <span class="badge bg-primary-subtle text-primary px-3 py-2">Moderators</span>
+            <span class="badge bg-primary-subtle text-primary px-3 py-2">Trust & Safety</span>
+            <span class="badge bg-primary-subtle text-primary px-3 py-2">Community Teams</span>
+            <span class="badge bg-primary-subtle text-primary px-3 py-2">Security</span>
+        </div>
+    </div>
+
+</div>

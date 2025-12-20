@@ -1,0 +1,124 @@
+﻿@{
+    ViewData["Title"] = "Access blocked";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    :root {
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #8b0000 100%);
+    }
+
+    .auth-hero-danger {
+        background: var(--danger-gradient);
+        color: white;
+        border-radius: 20px;
+        padding: 4rem 3rem;
+        border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .auth-icon-danger {
+        width: 82px;
+        height: 82px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        box-shadow: 0 0 0 6px rgba(255,255,255,0.08);
+    }
+
+    .auth-card-danger {
+        border: none;
+        border-radius: 18px;
+        box-shadow: 0 15px 40px rgba(220,53,69,0.25);
+        background: #ffffff;
+    }
+
+    .danger-hint {
+        background: rgba(220,53,69,0.08);
+        border-left: 5px solid #dc3545;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .countdown-danger {
+        font-size: 0.9rem;
+        color: #dc3545;
+        font-weight: 500;
+    }
+</style>
+}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- DANGER HERO -->
+            <div class="auth-hero-danger text-center shadow-lg mb-4">
+                <div class="auth-icon-danger mb-4">
+                    <i class="bi bi-exclamation-octagon-fill fs-2"></i>
+                </div>
+
+                <h1 class="fw-bold mb-3 text-uppercase">
+                    Access Blocked
+                </h1>
+
+                <p class="lead opacity-90">
+                    Unauthorized access attempt detected.<br />
+                    Authentication is required to proceed.
+                </p>
+            </div>
+
+            <!-- ACTION CARD -->
+            <div class="card auth-card-danger p-4 text-center">
+
+                <div class="danger-hint mb-4 text-start">
+                    <strong>Security Notice</strong><br />
+                    This dashboard contains sensitive moderation and risk intelligence data.
+                    Access is restricted to authenticated personnel only.
+                </div>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <a asp-controller="Auth"
+                       asp-action="Login"
+                       class="btn btn-danger btn-lg rounded-pill px-4 fw-bold">
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                        Authenticate Now
+                    </a>
+
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="btn btn-outline-danger btn-lg rounded-pill px-4">
+                        Return to Safety
+                    </a>
+                </div>
+
+                <div class="countdown-danger mt-4">
+                    Automatic redirect in <span id="timer">5</span> seconds
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    let seconds = 5;
+    const timerEl = document.getElementById("timer");
+
+    const interval = setInterval(() => {
+        seconds--;
+        timerEl.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(interval);
+            window.location.href = "/Auth/Login";
+        }
+    }, 1000);
+</script>
+}

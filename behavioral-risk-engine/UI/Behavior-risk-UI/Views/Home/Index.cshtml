@@ -1,0 +1,114 @@
+﻿@{
+    ViewData["Title"] = "Behavioral Risk Intelligence";
+    Layout = "_Layout";
+}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #003d99 100%);
+    }
+
+    .hero {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 20px;
+    }
+
+    .hero-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .feature-card {
+        border: none;
+        border-radius: 15px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+</style>
+
+<div class="container py-5">
+
+    <!-- HERO -->
+    <div class="hero p-5 mb-5 shadow-lg">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-icon mb-4">
+                    <i class="bi bi-shield-exclamation fs-2"></i>
+                </div>
+
+                <h1 class="display-6 fw-bold">
+                    Behavioral Risk Intelligence<br />
+                    for Moderation Teams
+                </h1>
+
+                <p class="lead opacity-90 mt-3">
+                    Identify spamming users, coordinated campaigns, and abnormal behavior
+                    using transparent risk scoring — before it overwhelms your platform.
+                </p>
+
+                <div class="d-flex gap-3 mt-4">
+                    <a asp-controller="Dashboard" asp-action="Index"
+                       class="btn btn-light btn-lg rounded-pill px-4 fw-bold">
+                        View Dashboard
+                    </a>
+
+                    <a asp-controller="Home" asp-action="About"
+                       class="btn btn-outline-light btn-lg rounded-pill px-4">
+                        How it works
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-5 d-none d-lg-block text-end">
+                <i class="bi bi-diagram-3-fill" style="font-size: 10rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card feature-card p-4 h-100 shadow-sm">
+                <i class="bi bi-graph-up-arrow fs-2 text-primary mb-3"></i>
+                <h5 class="fw-bold">Risk Scoring</h5>
+                <p class="text-muted">
+                    Each post and account receives a severity score
+                    based on repetition, coordination, and behavior patterns.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card feature-card p-4 h-100 shadow-sm">
+                <i class="bi bi-eye fs-2 text-primary mb-3"></i>
+                <h5 class="fw-bold">Explainability</h5>
+                <p class="text-muted">
+                    Every flag includes human-readable explanations,
+                    so moderators understand <em>why</em> something was flagged.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card feature-card p-4 h-100 shadow-sm">
+                <i class="bi bi-clock-history fs-2 text-primary mb-3"></i>
+                <h5 class="fw-bold">Temporal Tracking</h5>
+                <p class="text-muted">
+                    Track risk over time per account or cluster
+                    to detect escalation and coordinated campaigns.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>

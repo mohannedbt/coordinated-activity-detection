@@ -1,0 +1,16 @@
+post_id,text,timestamp,account_id,account_age_days
+1,"Spent the afternoon fixing a bug in my code","2025-01-01 09:05:00",user_001,540
+2,"Coffee tastes better after a long debugging session","2025-01-01 09:22:00",user_002,430
+3,"Finally finished reading that book I started last month","2025-01-01 09:47:00",user_003,390
+4,"Bitcoin has been moving sideways lately","2025-01-01 11:00:00",user_010,300
+5,"Crypto markets feel uncertain right now","2025-01-01 13:45:00",user_012,260
+6,"DOGE looks like it could pop soon! JOIN NOW","2025-01-01 18:01:00",bot_001,2
+7,"Seeing strong momentum on Dogecoin today. MOON!","2025-01-01 18:01:05",bot_002,1
+8,"Dogecoin might be the next big move. BUY BUY","2025-01-01 18:01:10",bot_003,3
+9,"Charts suggest DOGE could rally. DON'T MISS OUT","2025-01-01 18:01:15",bot_004,1
+10,"A lot of buzz forming around Dogecoin. GET IN EARLY","2025-01-01 18:01:20",bot_005,2
+11,"Working on my personal website redesign","2025-01-01 20:10:00",user_030,420
+12,"Tweaking the CSS on my website again","2025-01-01 21:30:00",user_030,420
+13,"URGENT: Your account will be locked. Click here to verify.","2025-01-01 22:00:00",scam_01,5
+14,"WIN A FREE IPHONE 16 - CLICK LINK IN BIO","2025-01-01 22:05:00",scam_02,8
+15,"I hate how the new update looks, it's so annoying.","2025-01-01 22:45:00",user_040,150

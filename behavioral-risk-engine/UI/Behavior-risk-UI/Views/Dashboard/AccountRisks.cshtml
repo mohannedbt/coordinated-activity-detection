@@ -1,0 +1,194 @@
+﻿@model DashboardViewModel
+<style>
+    /* SIDEBAR STYLING */
+    #wrapper {
+        display: flex;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    #sidebar-wrapper {
+        min-width: 280px;
+        max-width: 280px;
+        background: #ffffff;
+        transition: all 0.3s;
+    }
+
+    .sidebar-heading {
+        padding: 1.5rem 1.25rem;
+        font-size: 1.2rem;
+    }
+
+    .list-group-item {
+        border: none;
+        padding: 1rem 1.5rem;
+        margin: 0.2rem 0;
+        border-radius: 10px !important;
+        transition: all 0.2s;
+        color: #555;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+        transform: translateX(5px);
+    }
+
+    .list-group-item.active {
+        background-color: #e7f1ff !important;
+        color: #0d6efd !important;
+        font-weight: 600;
+    }
+
+    .border-dashed {
+        border: 2px dashed #dee2e6 !important;
+        transition: border-color 0.3s;
+    }
+
+    .border-dashed:hover {
+        border-color: #0d6efd !important;
+    }
+
+    #page-content-wrapper {
+        width: 100%;
+        background-color: #f8f9fa;
+    }
+</style>
+<div id="wrapper">
+
+<div class="border-end shadow-sm" id="sidebar-wrapper">
+    <div class="sidebar-heading border-bottom d-flex align-items-center">
+        <i class="bi bi-shield-lock-fill text-primary fs-3 me-2"></i>
+        <span class="fw-bold text-dark">Risk Guard AI</span>
+    </div>
+        
+    <div class="list-group list-group-flush mt-3">
+        <a asp-controller="Dashboard" asp-action="Index" class="list-group-item list-group-item-action ">
+            <i class="bi bi-grid-1x2-fill me-3"></i>Analytics Dashboard
+        </a>
+        <a asp-controller="Dashboard" asp-action="Logs" class="list-group-item list-group-item-action">
+            <i class="bi bi-shield-shaded me-3"></i>Action Logs
+        </a>
+        <a asp-controller="Dashboard" asp-action="Accounts" class="list-group-item list-group-item-action active">
+            <i class="bi bi-person-badge me-3"></i>Account Risks
+        </a>
+        <a asp-controller="Dashboard" asp-action="Settings" class="list-group-item list-group-item-action">
+            <i class="bi bi-gear me-3"></i>System Settings
+        </a>
+
+        <div class="mt-5 px-3">
+            <button type="button" class="btn btn-primary w-100 py-3 rounded-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="bi bi-file-earmark-arrow-up-fill me-2"></i>
+                Upload My CV
+            </button>
+        </div>
+    </div>
+</div>
+<div id="page-content-wrapper">
+<div class="container-fluid py-4">
+    <h2 class="fw-bold mb-4">Account Risk Profiles</h2>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold mb-3 text-muted">TOP RISK ACCOUNTS</h6>
+                <div style="height: 300px; position: relative;">
+
+                    <canvas id="accountRiskChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold mb-3 text-muted">POST VOLUME VS RISK</h6>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="bubbleChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+            <tr>
+                <th class="ps-4">Account ID</th>
+                <th>Total Posts</th>
+                <th>Avg Risk Score</th>
+                <th>Risk Trend</th>
+                <th class="text-end pe-4">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var acc in Model.TopAccounts) {
+                <tr>
+                    <td class="ps-4 fw-bold">@acc.AccountId</td>
+                    <td>@acc.TotalPosts</td>
+                    <td><span class="badge @(acc.AvgRisk > 70 ? "bg-danger" : "bg-warning")">@acc.AvgRisk.ToString("F1")</span></td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-outline-danger">Restrict</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div></div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Consistently use 'accounts' variable
+    const accounts = @Html.Raw(Model.AccountsJson ?? "[]");
+
+    // 1. Fixed Bar Chart Logic
+    const ctxBar = document.getElementById('accountRiskChart');
+    if (ctxBar) {
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: accounts.slice(0, 10).map(a => a.account_id),
+                datasets: [{ 
+                    label: 'Avg Risk', 
+                    data: accounts.slice(0, 10).map(a => a.avg_risk), 
+                    backgroundColor: '#dc3545'
+                }]
+            },
+            options: { 
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false, // CRITICAL: Stop the chart from expanding infinitely
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // 2. Fixed Bubble Chart Logic
+    const ctxBubble = document.getElementById('bubbleChart');
+    if (ctxBubble) {
+        const bubblePoints = accounts.map(a => ({
+            x: a.total_posts ?? 0, 
+            y: a.avg_risk ?? 0,    
+            r: 10                  
+        }));
+
+        new Chart(ctxBubble, {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Accounts',
+                    data: bubblePoints,
+                    backgroundColor: 'rgba(13, 110, 253, 0.5)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // CRITICAL: Fixes empty/expanding chart
+                scales: {
+                    x: { title: { display: true, text: 'Post Volume' }, beginAtZero: true },
+                    y: { title: { display: true, text: 'Risk Score' }, min: 0, max: 100 }
+                }
+            }
+        });
+    }
+});
+</script>

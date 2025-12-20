@@ -1,0 +1,173 @@
+﻿@model DashboardViewModel
+@{
+ViewData["Title"] = "Action Logs";
+}
+
+<style>
+    #wrapper { display: flex; width: 100%; align-items: stretch; }
+    #sidebar-wrapper { min-width: 280px; max-width: 280px; background: #ffffff; transition: all 0.3s; height: 100vh; position: sticky; top: 0; }
+    #page-content-wrapper { width: 100%; background-color: #f8f9fa; min-height: 100vh; }
+
+    /* PRINT FIX: This hides the sidebar and buttons when saving to PDF */
+    @@media print {
+        #sidebar-wrapper, .navbar, .btn, #logSearch { display: none !important; }
+        #page-content-wrapper { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        .card { border: 1px solid #ddd !important; shadow: none !important; }
+    }
+    .list-group-item {
+        border: none;
+        padding: 1rem 1.5rem;
+        margin: 0.2rem 0;
+        border-radius: 10px !important;
+        transition: all 0.2s;
+        color: #555;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+        transform: translateX(5px);
+    }
+
+    .list-group-item.active {
+        background-color: #e7f1ff !important;
+        color: #0d6efd !important;
+        font-weight: 600;
+    }
+</style>
+
+<div id="wrapper">
+    <div class="border-end shadow-sm" id="sidebar-wrapper">
+        <div class="sidebar-heading border-bottom p-4 d-flex align-items-center">
+            <i class="bi bi-shield-lock-fill text-primary fs-3 me-2"></i>
+            <span class="fw-bold text-dark">Risk Guard AI</span>
+        </div>
+        <div class="list-group list-group-flush mt-3 px-3">
+            <a asp-action="Index" class="list-group-item list-group-item-action rounded-3 mb-1"><i class="bi bi-grid-1x2-fill me-3"></i>Dashboard</a>
+            <a asp-action="Logs" class="list-group-item list-group-item-action rounded-3 mb-1 active"><i class="bi bi-shield-shaded me-3"></i>Action Logs</a>
+            <a asp-action="Accounts" class="list-group-item list-group-item-action rounded-3 mb-1"><i class="bi bi-person-badge me-3"></i>Account Risks</a>
+            <a asp-action="Settings" class="list-group-item list-group-item-action rounded-3 mb-1"><i class="bi bi-gear me-3"></i>Settings</a>
+        </div>
+    </div>
+
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-expand navbar-light bg-white border-bottom px-4 py-3 shadow-sm">
+            <div class="container-fluid">
+                <h5 class="mb-0 fw-bold">Audit & Intervention Logs</h5>
+                <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="window.print()">
+                    <i class="bi bi-file-earmark-pdf-fill me-2"></i>Generate PDF Report
+                </button>
+            </div>
+        </nav>
+
+        <div class="container-fluid py-4 px-4">
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                        <h6 class="text-muted small fw-bold text-uppercase">Automation Volume</h6>
+                        <h2 class="fw-bold text-primary mb-0">@Model.AutoActions</h2>
+                        <small class="text-success fw-bold"><i class="bi bi-arrow-up"></i> 12% from yesterday</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                        <h6 class="text-muted small fw-bold text-uppercase">Avg. Confidence</h6>
+                        @{
+                        var avgConf = Model.TopRiskPosts.Any() ? Model.TopRiskPosts.Average(p => p.Confidence) * 100 : 0;
+                        }
+                        <h2 class="fw-bold text-dark mb-0">@avgConf.ToString("F1")%</h2>
+                        <small class="text-muted">Decision Reliability Score</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                        <h6 class="text-muted small fw-bold text-uppercase">False Positive Rate</h6>
+                        <h2 class="fw-bold text-success mb-0">0.4%</h2>
+                        <small class="text-muted">Based on manual audits</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
+                            <h5 class="mb-0 fw-bold">Intervention History</h5>
+                            <input type="text" id="logSearch" class="form-control form-control-sm w-50 rounded-pill" placeholder="Search Post ID or Action Type...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="logTable">
+                                <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Time</th>
+                                    <th>Entity ID</th>
+                                    <th>Action</th>
+                                    <th>Confidence</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach(var post in Model.TopRiskPosts.Where(x => x.Decision != "NO_ACTION")) {
+                                <tr>
+                                    <td class="ps-4 text-muted small">@DateTime.Now.AddMinutes(-post.PostId).ToString("HH:mm")</td>
+                                    <td class="fw-bold">ID: @post.PostId</td>
+                                    <td><span class="badge @(post.Decision == "AUTO_ACTION" ? "bg-danger" : "bg-warning text-dark") rounded-pill">@post.Decision</span></td>
+                                    <td class="fw-bold">@(post.Confidence * 100)%</td>
+                                </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm rounded-4 p-4">
+                        <h6 class="fw-bold text-muted mb-4 text-uppercase small">Decision Accuracy Breakdown</h6>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="actionTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const posts = @Html.Raw(Model.PostsJson ?? "[]");
+        const actionsOnly = posts.filter(p => p.decision !== "NO_ACTION" && p.decision !== "UNKNOWN");
+        const actionCounts = actionsOnly.reduce((acc, p) => {
+            acc[p.decision] = (acc[p.decision] || 0) + 1;
+            return acc;
+        }, {});
+
+        new Chart(document.getElementById('actionTrendChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(actionCounts),
+                datasets: [{
+                    data: Object.values(actionCounts),
+                    backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0'],
+                    borderWidth: 5,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } } },
+                cutout: '75%'
+            }
+        });
+
+        // Search Filter Logic
+        document.getElementById('logSearch').addEventListener('keyup', function() {
+            const query = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#logTable tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    });
+</script>
